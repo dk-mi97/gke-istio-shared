@@ -23,6 +23,14 @@ ISTIO_DIR="${1}"
 ISTIO_YAML="${2}"
 ISTIO_NAMESPACE="${3}"
 SHARED_DIR="${4}"
+ISTIO_VERSION="${5:-latest}"
+
+# Download istio if directory doesn't exist
+if [ ! -d "$ISTIO_DIR" ]; then
+    echo "Downloading Istio version $ISTIO_VERSION"
+    curl -L https://github.com/istio/istio/releases/download/$ISTIO_VERSION/istio-$ISTIO_VERSION-linux-amd64.tar.gz | tar xz -C /tmp
+    mv /tmp/istio-$ISTIO_VERSION $ISTIO_DIR
+fi
 
 source "${SHARED_DIR}/verify-functions.sh"
 
