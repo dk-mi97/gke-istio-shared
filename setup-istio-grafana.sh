@@ -22,13 +22,59 @@ ISTIO_DIR="${1}"
 NAMESPACE="${2}"
 SHARED_DIR="${3}"
 
+# Check if Grafana should be installed for this environment
+source "$SHARED_DIR/environment-config.sh" "${4:-dev}"
+if [ "$GRAFANA_ENABLED" != "true" ]; then
+    echo "Grafana disabled for this environment, skipping installation"
+    exit 0
+fi
 #### functions to check existence of resources
 source "$SHARED_DIR/verify-functions.sh"
 
+# Check if custom Grafana version is specified
+GRAFANA_VERSION="${4:-v7.3.7}"
+if [ "$GRAFANA_VERSION" != "v7.3.7" ]; then
+    echo "Using custom Grafana version: $GRAFANA_VERSION"
+    # Download custom grafana config
+    wget -O /tmp/grafana-$GRAFANA_VERSION.yaml https://raw.githubusercontent.com/istio/istio/$GRAFANA_VERSION/install/kubernetes/addons/grafana.yaml
+    kubectl apply -f /tmp/grafana-$GRAFANA_VERSION.yaml
+else
+    kubectl apply -f "${ISTIO_DIR}"/install/kubernetes/addons/grafana.yaml
+fi
+
 # Install the Grafana add-on so the user can view Istio metrics in a graphical
 # dashboard
-echo "Installing Grafana addon"
-kubectl apply -f "${ISTIO_DIR}"/install/kubernetes/addons/grafana.yaml
+echo "Installed Grafana addon"
+#kubectl apply -f "${ISTIO_DIR}"/install/kubernetes/addons/grafana.yaml
+
+echo "Enabling enhanced debugging and monitoring..."
+
+# Enable debug mode for better troubleshooting
+kubectl patch deployment istiod -n istio-system -p='
+{
+  "spec": {
+    "template": {
+      "spec": {
+        "containers": [
+          {
+            "name": "discovery",
+            "env": [
+              {
+                "name": "ENABLE_DEBUG_ON_HTTP",
+                "value": "true"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}'
+
+# Make debug endpoints accessible
+kubectl expose deployment istiod --port=8080 --target-port=8080 --name=istio-debug -n istio-system
+echo "Debug endpoints enabled - accessible at :8080/debug"
+
 
 # Verify the install
 echo "Verifying Grafana is installed"

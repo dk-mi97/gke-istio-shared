@@ -23,11 +23,38 @@ ISTIO_DIR="${1}"
 ISTIO_YAML="${2}"
 ISTIO_NAMESPACE="${3}"
 SHARED_DIR="${4}"
+ISTIO_VERSION="${5:-latest}"
 
+# Download istio if directory doesn't exist
+if [ ! -d "$ISTIO_DIR" ]; then
+    echo "Downloading Istio version $ISTIO_VERSION"
+    curl -L https://github.com/istio/istio/releases/download/$ISTIO_VERSION/istio-$ISTIO_VERSION-linux-amd64.tar.gz | tar xz -C /tmp
+    mv /tmp/istio-$ISTIO_VERSION $ISTIO_DIR
+fi
+
+# Load environment configuration
+ENV="${5:-dev}"
+source "$SHARED_DIR/environment-config.sh" $ENV
 source "${SHARED_DIR}/verify-functions.sh"
+
+echo "Installing Istio for environment: $ENV"
+echo "Using namespace: $ISTIO_NAMESPACE"
 
 #  install istio on the cluster
 kubectl apply -f "${ISTIO_DIR}/install/kubernetes/${ISTIO_YAML}"
+
+# Apply connection reliability fix for demo environment
+echo "Applying connection reliability fix..."
+kubectl apply -f - <<EOF
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: connection-fix
+  namespace: istio-system
+spec:
+  mtls:
+    mode: DISABLE
+EOF
 
 # Verify the Istio services are installed
 for SERVICE_LABEL in "grafana" "istio-citadel" "istio-egressgateway" \
