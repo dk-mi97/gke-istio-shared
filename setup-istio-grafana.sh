@@ -47,6 +47,35 @@ fi
 echo "Installed Grafana addon"
 #kubectl apply -f "${ISTIO_DIR}"/install/kubernetes/addons/grafana.yaml
 
+echo "Enabling enhanced debugging and monitoring..."
+
+# Enable debug mode for better troubleshooting
+kubectl patch deployment istiod -n istio-system -p='
+{
+  "spec": {
+    "template": {
+      "spec": {
+        "containers": [
+          {
+            "name": "discovery",
+            "env": [
+              {
+                "name": "ENABLE_DEBUG_ON_HTTP",
+                "value": "true"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}'
+
+# Make debug endpoints accessible
+kubectl expose deployment istiod --port=8080 --target-port=8080 --name=istio-debug -n istio-system
+echo "Debug endpoints enabled - accessible at :8080/debug"
+
+
 # Verify the install
 echo "Verifying Grafana is installed"
 
