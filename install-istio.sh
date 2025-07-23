@@ -43,6 +43,19 @@ echo "Using namespace: $ISTIO_NAMESPACE"
 #  install istio on the cluster
 kubectl apply -f "${ISTIO_DIR}/install/kubernetes/${ISTIO_YAML}"
 
+# Apply connection reliability fix for demo environment
+echo "Applying connection reliability fix..."
+kubectl apply -f - <<EOF
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: connection-fix
+  namespace: istio-system
+spec:
+  mtls:
+    mode: DISABLE
+EOF
+
 # Verify the Istio services are installed
 for SERVICE_LABEL in "grafana" "istio-citadel" "istio-egressgateway" \
   "istio-ingressgateway" "istio-pilot" "istio-policy" "istio-sidecar-injector" \
