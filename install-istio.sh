@@ -32,7 +32,13 @@ if [ ! -d "$ISTIO_DIR" ]; then
     mv /tmp/istio-$ISTIO_VERSION $ISTIO_DIR
 fi
 
+# Load environment configuration
+ENV="${5:-dev}"
+source "$SHARED_DIR/environment-config.sh" $ENV
 source "${SHARED_DIR}/verify-functions.sh"
+
+echo "Installing Istio for environment: $ENV"
+echo "Using namespace: $ISTIO_NAMESPACE"
 
 #  install istio on the cluster
 kubectl apply -f "${ISTIO_DIR}/install/kubernetes/${ISTIO_YAML}"
