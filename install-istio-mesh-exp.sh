@@ -26,7 +26,10 @@ SHARED_DIR="${3}"
 source "${SHARED_DIR}/verify-functions.sh"
 
 echo "Install Istio components necessary for mesh expansion"
-kubectl apply -f "$ISTIO_DIR/install/kubernetes/mesh-expansion.yaml"
+# Support for custom mesh expansion config
+MESH_CONFIG="${4:-$ISTIO_DIR/install/kubernetes/mesh-expansion.yaml}"
+echo "Applying mesh expansion config: $MESH_CONFIG"
+kubectl apply -f $MESH_CONFIG
 
 echo "Verify Istio mesh expansion services have IP addresses"
 
