@@ -38,8 +38,8 @@ fi
 
 # Install the Grafana add-on so the user can view Istio metrics in a graphical
 # dashboard
-echo "Installing Grafana addon"
-kubectl apply -f "${ISTIO_DIR}"/install/kubernetes/addons/grafana.yaml
+echo "Installed Grafana addon"
+#kubectl apply -f "${ISTIO_DIR}"/install/kubernetes/addons/grafana.yaml
 
 # Verify the install
 echo "Verifying Grafana is installed"
